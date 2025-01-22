@@ -23,6 +23,11 @@ pip3 install -r requirements.txt
 ```
 
 Jalankan Bot
+screen
+
+```bash
+screen -S autosend
+```
 ```bash
 python3 bot.py
 ```
