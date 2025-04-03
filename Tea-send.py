@@ -9,7 +9,7 @@ init(autoreset=True)
 
 # Tea-Sepolia Testnet Configuration (default values)
 CHAIN_ID = 10218
-CURRENCY_SYMBOL = "TEA"
+CURRENCY_SYMBOL = "TEA"  # Untuk token native
 DECIMALS = 18  # Set to the token's decimals (commonly 18 for most tokens)
 
 # ABI for the ERC-20 token contract (Standard ERC-20 ABI for transfers)
@@ -61,7 +61,6 @@ def transfer_native_token(sender, senderkey, recipient, amount, web3, retries=3)
             signed_txn = web3.eth.account.sign_transaction(transaction, senderkey)
             print(Fore.CYAN + f'Memproses pengiriman {amount} {CURRENCY_SYMBOL} (native) ke alamat: {recipient} ...')
 
-            # Menggunakan raw_transaction (kompatibel dengan Web3.py v6+)
             tx_hash = web3.eth.send_raw_transaction(signed_txn.raw_transaction)
             txid = web3.to_hex(tx_hash)
             web3.eth.wait_for_transaction_receipt(tx_hash)
@@ -80,8 +79,8 @@ def transfer_native_token(sender, senderkey, recipient, amount, web3, retries=3)
             else:
                 print(Fore.RED + f"Transaksi gagal setelah {retries} percobaan.")
 
-# Transfer ERC-20 tokens function
-def transfer_erc20_token(sender, senderkey, recipient, amount, web3, token_address, retries=3):
+# Transfer ERC-20 tokens function (Diperbarui dengan nama token)
+def transfer_erc20_token(sender, senderkey, recipient, amount, web3, token_address, token_name, retries=3):
     for attempt in range(retries):
         try:
             token_contract = web3.eth.contract(address=token_address, abi=ERC20_ABI)
@@ -94,25 +93,25 @@ def transfer_erc20_token(sender, senderkey, recipient, amount, web3, token_addre
             base_gas_price = web3.eth.gas_price
             gas_price = int(base_gas_price * (1.2 + attempt * 0.1))  # Tambahkan 20% setiap percobaan
 
-            transaction = {
+            # Membuat data transaksi menggunakan functions.transfer
+            txn = token_contract.functions.transfer(recipient, token_amount).build_transaction({
                 'chainId': CHAIN_ID,
                 'from': sender,
                 'gas': 200000,
                 'gasPrice': gas_price,
                 'nonce': nonce,
-                'to': token_address,
-                'data': token_contract.encodeABI(fn_name='transfer', args=[recipient, token_amount]),
-            }
+            })
 
-            signed_txn = web3.eth.account.sign_transaction(transaction, senderkey)
-            print(Fore.CYAN + f'Memproses pengiriman {amount} token ERC-20 ke alamat: {recipient} ...')
+            # Menandatangani transaksi
+            signed_txn = web3.eth.account.sign_transaction(txn, senderkey)
+            print(Fore.CYAN + f'Memproses pengiriman {amount} {token_name} (ERC-20) ke alamat: {recipient} ...')
 
-            # Menggunakan raw_transaction (kompatibel dengan Web3.py v6+)
+            # Mengirim transaksi
             tx_hash = web3.eth.send_raw_transaction(signed_txn.raw_transaction)
             txid = web3.to_hex(tx_hash)
             web3.eth.wait_for_transaction_receipt(tx_hash)
 
-            print(Fore.GREEN + f'Pengiriman {amount} token ERC-20 ke {recipient} berhasil!')
+            print(Fore.GREEN + f'Pengiriman {amount} {token_name} (ERC-20) ke {recipient} berhasil!')
             print(Fore.GREEN + f'TX-ID : {txid}')
             print(Fore.CYAN + f'Block Explorer: https://sepolia.tea.xyz/tx/{txid}')
             break
@@ -207,9 +206,12 @@ print(Fore.YELLOW + "1. Native TEA")
 print(Fore.YELLOW + "2. ERC-20 Token")
 token_type = input("Masukkan pilihan (1 atau 2): ").strip()
 
+# Variabel untuk menyimpan nama token ERC-20
+token_name = None
 if token_type == "2":
-    # Ask for the ERC-20 token address
+    # Ask for the ERC-20 token address and name
     TOKEN_ADDRESS = input("Masukkan alamat kontrak ERC-20 token: ").strip()
+    token_name = input("Masukkan nama token ERC-20 (contoh: USDT, DAI): ").strip()
 
 # Ask the user for the recipient type
 print(Fore.YELLOW + "Pilih jenis penerima:")
@@ -233,7 +235,9 @@ if loop > 1000:
     loop = 1000
 
 # Ask the user how much to send per transaction
-amount = float(input(f"Berapa banyak {CURRENCY_SYMBOL} yang akan dikirim per transaksi (contoh: 0.001)?: "))
+# Gunakan nama token yang sesuai untuk prompt
+prompt_symbol = CURRENCY_SYMBOL if token_type == "1" else token_name
+amount = float(input(f"Berapa banyak {prompt_symbol} yang akan dikirim per transaksi (contoh: 0.001)?: "))
 
 for i in range(loop):
     print(Fore.CYAN + f"\nMemproses Transaksi {i + 1}/{loop}")
@@ -252,7 +256,7 @@ for i in range(loop):
     if token_type == "1":
         transfer_native_token(sender.address, private_key, recipient_addr, amount, web3)
     elif token_type == "2":
-        transfer_erc20_token(sender.address, private_key, recipient_addr, amount, web3, TOKEN_ADDRESS)
+        transfer_erc20_token(sender.address, private_key, recipient_addr, amount, web3, TOKEN_ADDRESS, token_name)
     else:
         print(Fore.RED + "Pilihan token tidak valid. Hanya masukkan 1 atau 2.")
         break
