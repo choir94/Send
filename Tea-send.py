@@ -7,8 +7,7 @@ import time
 # Initialize colorama
 init(autoreset=True)
 
-# Tea-Sepolia Testnet Configuration
-RPC_URL = "https://tea-sepolia.g.alchemy.com/public"
+# Tea-Sepolia Testnet Configuration (default values)
 CHAIN_ID = 10218
 CURRENCY_SYMBOL = "TEA"
 DECIMALS = 18  # Set to the token's decimals (commonly 18 for most tokens)
@@ -165,27 +164,33 @@ def check_rpc_url(rpc_url, retries=3):
             web3 = Web3(Web3.HTTPProvider(rpc_url))
             if web3.is_connected():
                 print(Fore.GREEN + "Terhubung ke RPC dengan sukses!")
-                chain_id = web3.eth.chain_id  # Try to get the chain ID
+                chain_id = web3.eth.chain_id
                 print(Fore.CYAN + f"Chain ID: {chain_id}")
+                if chain_id != CHAIN_ID:
+                    print(Fore.RED + f"Chain ID ({chain_id}) tidak sesuai dengan Tea-Sepolia ({CHAIN_ID})!")
+                    return None
                 return web3
             else:
                 print(Fore.RED + "Gagal terhubung ke RPC. Periksa URL dan coba lagi.")
-                if attempt < retries - 1:
-                    print(Fore.YELLOW + f"Mencoba ulang dalam 5 detik... ({attempt + 1}/{retries})")
-                    time.sleep(5)
         except Exception as e:
             print(Fore.RED + f"Error menghubungkan ke RPC pada percobaan {attempt + 1}: {e}")
-            if attempt < retries - 1:
-                print(Fore.YELLOW + f"Mencoba ulang dalam 5 detik... ({attempt + 1}/{retries})")
-                time.sleep(5)
-        if attempt == retries - 1:
+        if attempt < retries - 1:
+            print(Fore.YELLOW + f"Mencoba ulang dalam 5 detik... ({attempt + 1}/{retries})")
+            time.sleep(5)
+        else:
             print(Fore.RED + f"Gagal terhubung ke RPC setelah {retries} percobaan.")
-            return None
+    return None
 
 # Main execution
 print_header()
 
-# Use Tea-Sepolia Testnet RPC URL
+# Ask the user for the RPC URL
+default_rpc = "https://tea-sepolia.g.alchemy.com/public"
+print(Fore.YELLOW + f"Masukkan RPC URL (tekan Enter untuk menggunakan default: {default_rpc}):")
+rpc_input = input().strip()
+RPC_URL = rpc_input if rpc_input else default_rpc
+
+# Check and connect to the provided RPC URL
 web3 = check_rpc_url(RPC_URL)
 if not web3:
     exit()
