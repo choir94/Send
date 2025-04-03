@@ -61,7 +61,8 @@ def transfer_native_token(sender, senderkey, recipient, amount, web3, retries=3)
             signed_txn = web3.eth.account.sign_transaction(transaction, senderkey)
             print(Fore.CYAN + f'Memproses pengiriman {amount} {CURRENCY_SYMBOL} (native) ke alamat: {recipient} ...')
 
-            tx_hash = web3.eth.send_raw_transaction(signed_txn.rawTransaction)
+            # Menggunakan raw_transaction (kompatibel dengan Web3.py v6+)
+            tx_hash = web3.eth.send_raw_transaction(signed_txn.raw_transaction)
             txid = web3.to_hex(tx_hash)
             web3.eth.wait_for_transaction_receipt(tx_hash)
 
@@ -106,7 +107,8 @@ def transfer_erc20_token(sender, senderkey, recipient, amount, web3, token_addre
             signed_txn = web3.eth.account.sign_transaction(transaction, senderkey)
             print(Fore.CYAN + f'Memproses pengiriman {amount} token ERC-20 ke alamat: {recipient} ...')
 
-            tx_hash = web3.eth.send_raw_transaction(signed_txn.rawTransaction)
+            # Menggunakan raw_transaction (kompatibel dengan Web3.py v6+)
+            tx_hash = web3.eth.send_raw_transaction(signed_txn.raw_transaction)
             txid = web3.to_hex(tx_hash)
             web3.eth.wait_for_transaction_receipt(tx_hash)
 
