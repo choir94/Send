@@ -29,7 +29,7 @@ screen
 screen -S autosend
 ```
 ```bash
-python3 bot.py
+python3 Tea-send.py
 ```
 
 -- Done
