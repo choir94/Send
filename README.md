@@ -1,4 +1,4 @@
-##Tea Assam Auto send token
+##Tea Sepolia Auto send token
 
 Deploy SmartContract
 
