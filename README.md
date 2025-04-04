@@ -31,5 +31,9 @@ screen -S autosend
 ```bash
 python3 Tea-send.py
 ```
+Atau pakai ini untuk via .env, transaksi delay, address kyc auto download.
+```bash
+python3 bot.py
+```
 
 -- Done
